@@ -1,45 +1,52 @@
-// Lista de aumentos con sus respectivos valores de avg placement
-const augmentations = [
-    { name: "Augmento 1", avgPlacement: 4.5 },
-    { name: "Augmento 2", avgPlacement: 3.0 },
-    { name: "Augmento 3", avgPlacement: 2.2 },
-    { name: "Augmento 4", avgPlacement: 5.0 },
-    { name: "Augmento 5", avgPlacement: 1.8 },
-];
+// Cargar los datos del JSON
+let augmentsData = [];
 
-// Seleccionar un aumento aleatorio al cargar la página
-let currentAug = augmentations[Math.floor(Math.random() * augmentations.length)];
+// Función para cargar el archivo JSON
+async function fetchAugments() {
+    const response = await fetch('unique_augments_data.json');
+    const data = await response.json();
+    augmentsData = data;
+    showRandomAugment();
+}
 
-document.getElementById("random-aug").innerText = currentAug.name;
+// Variables para almacenar el aumento actual y su avg placement
+let currentAugment = null;
+let currentAvgPlacement = null;
 
-const form = document.getElementById("guess-form");
-const resultDiv = document.getElementById("result");
-const newAugBtn = document.getElementById("new-aug-btn");
+// Función para mostrar un aumento aleatorio
+function showRandomAugment() {
+    const randomIndex = Math.floor(Math.random() * augmentsData.length);
+    currentAugment = augmentsData[randomIndex];
+    currentAvgPlacement = parseFloat(currentAugment.avg_placement);
 
-// Función para comprobar si el usuario ha adivinado correctamente
-form.addEventListener("submit", function (e) {
-    e.preventDefault();
+    // Mostrar el aumento y la imagen en la página
+    document.getElementById('augment-name').textContent = currentAugment.name;
+    document.getElementById('augment-image').src = currentAugment.image_url;
+
+    // Limpiar el input y feedback
+    document.getElementById('avg-placement-input').value = '';
+    document.getElementById('feedback').textContent = '';
+}
+
+// Función para verificar el valor del avg placement ingresado
+function checkPlacement() {
+    const userInput = parseFloat(document.getElementById('avg-placement-input').value);
     
-    const guess = parseFloat(document.getElementById("avg-placement").value);
-    
-    if (guess === currentAug.avgPlacement) {
-        resultDiv.innerText = "¡Correcto!";
-        resultDiv.classList.remove("hidden");
-        newAugBtn.classList.remove("hidden");
-    } else if (guess < currentAug.avgPlacement) {
-        resultDiv.innerText = "Más alto!";
-        resultDiv.classList.remove("hidden");
-    } else {
-        resultDiv.innerText = "Más bajo!";
-        resultDiv.classList.remove("hidden");
+    if (isNaN(userInput)) {
+        document.getElementById('feedback').textContent = 'Please, select a valid number.';
+        return;
     }
-});
 
-// Función para reiniciar con un nuevo aumento aleatorio
-newAugBtn.addEventListener("click", function () {
-    currentAug = augmentations[Math.floor(Math.random() * augmentations.length)];
-    document.getElementById("random-aug").innerText = currentAug.name;
-    resultDiv.classList.add("hidden");
-    newAugBtn.classList.add("hidden");
-    document.getElementById("avg-placement").value = '';
-});
+    if (userInput < currentAvgPlacement) {
+        document.getElementById('feedback').textContent = 'Avg placement higher.';
+    } else if (userInput > currentAvgPlacement) {
+        document.getElementById('feedback').textContent = 'Avg placement lower.';
+    } else {
+        document.getElementById('feedback').textContent = 'Awesome! Try with a new one!.';
+        // Mostrar otro aumento tras acertar
+        setTimeout(showRandomAugment, 2000);
+    }
+}
+
+// Cargar los datos cuando la página cargue
+window.onload = fetchAugments;

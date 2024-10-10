@@ -1,0 +1,202 @@
+[
+    {
+        "name": "Portable Forge",
+        "image_url": "augment_images/Portable_Forge.jpg"
+    },
+    {
+        "name": "Big Grab Bag",
+        "image_url": "augment_images/Big_Grab_Bag.jpg"
+    },
+    {
+        "name": "Pandora's Items II",
+        "image_url": "augment_images/Pandora's_Items_II.jpg"
+    },
+    {
+        "name": "Pandora's Bench",
+        "image_url": "augment_images/Pandora's_Bench.jpg"
+    },
+    {
+        "name": "New Recruit",
+        "image_url": "augment_images/New_Recruit.jpg"
+    },
+    {
+        "name": "Heroic Grab Bag",
+        "image_url": "augment_images/Heroic_Grab_Bag.jpg"
+    },
+    {
+        "name": "Magic Wand",
+        "image_url": "augment_images/Magic_Wand.jpg"
+    },
+    {
+        "name": "Combat Caster",
+        "image_url": "augment_images/Combat_Caster.jpg"
+    },
+    {
+        "name": "Pandora's Items",
+        "image_url": "augment_images/Pandora's_Items.jpg"
+    },
+    {
+        "name": "Branching Out",
+        "image_url": "augment_images/Branching_Out.jpg"
+    },
+    {
+        "name": "Giant and Mighty",
+        "image_url": "augment_images/Giant_and_Mighty.jpg"
+    },
+    {
+        "name": "Duo Queue",
+        "image_url": "augment_images/Duo_Queue.jpg"
+    },
+    {
+        "name": "Radiant Refactor",
+        "image_url": "augment_images/Radiant_Refactor.jpg"
+    },
+    {
+        "name": "Radiant Relics",
+        "image_url": "augment_images/Radiant_Relics.jpg"
+    },
+    {
+        "name": "Pandora's Items III",
+        "image_url": "augment_images/Pandora's_Items_III.jpg"
+    },
+    {
+        "name": "Inspiring Epitaph",
+        "image_url": "augment_images/Inspiring_Epitaph.jpg"
+    },
+    {
+        "name": "ReinFOURcement",
+        "image_url": "augment_images/ReinFOURcement.jpg"
+    },
+    {
+        "name": "Support Cache",
+        "image_url": "augment_images/Support_Cache.jpg"
+    },
+    {
+        "name": "You Have My Bow",
+        "image_url": "augment_images/You_Have_My_Bow.jpg"
+    },
+    {
+        "name": "Rolling For Days I",
+        "image_url": "augment_images/Rolling_For_Days_I.jpg"
+    },
+    {
+        "name": "Replication",
+        "image_url": "augment_images/Replication.jpg"
+    },
+    {
+        "name": "Wandering Trainer I",
+        "image_url": "augment_images/Wandering_Trainer_I.jpg"
+    },
+    {
+        "name": "Combat Bandages II",
+        "image_url": "augment_images/Combat_Bandages_II.jpg"
+    },
+    {
+        "name": "Spellcaster's Toolbox",
+        "image_url": "augment_images/Spellcaster's_Toolbox.jpg"
+    },
+    {
+        "name": "Call to Chaos",
+        "image_url": "augment_images/Call_to_Chaos.jpg"
+    },
+    {
+        "name": "Blossoming Lotus I",
+        "image_url": "augment_images/Blossoming_Lotus_I.jpg"
+    },
+    {
+        "name": "Avenge The Fallen",
+        "image_url": "augment_images/Avenge_The_Fallen.jpg"
+    },
+    {
+        "name": "High Voltage",
+        "image_url": "augment_images/High_Voltage.jpg"
+    },
+    {
+        "name": "Mage Crest",
+        "image_url": "augment_images/Mage_Crest.jpg"
+    },
+    {
+        "name": "Spellblades",
+        "image_url": "augment_images/Spellblades.jpg"
+    },
+    {
+        "name": "Ascension",
+        "image_url": "augment_images/Ascension.jpg"
+    },
+    {
+        "name": "Prismatic Ticket",
+        "image_url": "augment_images/Prismatic_Ticket.jpg"
+    },
+    {
+        "name": "Practice Partners",
+        "image_url": "augment_images/Practice_Partners.jpg"
+    },
+    {
+        "name": "Martyr",
+        "image_url": "augment_images/Martyr.jpg"
+    },
+    {
+        "name": "What the Forge",
+        "image_url": "augment_images/What_the_Forge.jpg"
+    },
+    {
+        "name": "Invested++",
+        "image_url": "augment_images/Invested++.jpg"
+    },
+    {
+        "name": "Lucky Gloves+",
+        "image_url": "augment_images/Lucky_Gloves+.jpg"
+    },
+    {
+        "name": "Little Buddies",
+        "image_url": "augment_images/Little_Buddies.jpg"
+    },
+    {
+        "name": "Placebo",
+        "image_url": "augment_images/Placebo.jpg"
+    },
+    {
+        "name": "You Have My Sword",
+        "image_url": "augment_images/You_Have_My_Sword.jpg"
+    },
+    {
+        "name": "Teaming Up II",
+        "image_url": "augment_images/Teaming_Up_II.jpg"
+    },
+    {
+        "name": "Raining Gold+",
+        "image_url": "augment_images/Raining_Gold+.jpg"
+    },
+    {
+        "name": "Capricious Forge",
+        "image_url": "augment_images/Capricious_Forge.jpg"
+    },
+    {
+        "name": "Unified Resistance II",
+        "image_url": "augment_images/Unified_Resistance_II.jpg"
+    },
+    {
+        "name": "Explosive Growth+",
+        "image_url": "augment_images/Explosive_Growth+.jpg"
+    },
+    {
+        "name": "Tiny Titans",
+        "image_url": "augment_images/Tiny_Titans.jpg"
+    },
+    {
+        "name": "Transfiguration",
+        "image_url": "augment_images/Transfiguration.jpg"
+    },
+    {
+        "name": "Clockwork Accelerator",
+        "image_url": "augment_images/Clockwork_Accelerator.jpg"
+    },
+    {
+        "name": "Buried Treasures III",
+        "image_url": "augment_images/Buried_Treasures_III.jpg"
+    },
+    {
+        "name": "Unleash The Beast",
+        "image_url": "augment_images/Unleash_The_Beast.jpg"
+    }
+]
