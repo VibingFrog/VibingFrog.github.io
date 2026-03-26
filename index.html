@@ -1,43 +1,1417 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TFT Augments Wordle</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            margin-top: 50px;
-        }
-        .augment-card {
-            display: inline-block;
-            border: 1px solid #ccc;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
-        }
-        .augment-image {
-            width: 80px;
-            height: 80px;
-        }
-        .result {
-            margin-top: 20px;
-            font-size: 1.2em;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cuando pare el ruido</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Cinzel:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0d0c0a;
+    --bg2: #131210;
+    --text: #e8e0d0;
+    --text-dim: #9a9080;
+    --accent: #c4956a;
+    --accent2: #8faf8f;
+    --choice-bg: rgba(255,255,255,0.04);
+    --choice-hover: rgba(196,149,106,0.12);
+    --choice-border: rgba(196,149,106,0.25);
+  }
+
+  html, body {
+    width: 100%; height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'EB Garamond', Georgia, serif;
+    font-size: 18px;
+    line-height: 1.85;
+    overflow: hidden;
+  }
+
+  /* GRAIN OVERLAY */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 100;
+    opacity: 0.6;
+  }
+
+  /* VIGNETTE */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.7) 100%);
+    pointer-events: none;
+    z-index: 99;
+  }
+
+  /* TITLE SCREEN */
+  #title-screen {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg);
+    z-index: 200;
+    transition: opacity 1.5s ease;
+  }
+
+  #title-screen.fade-out {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .title-eyebrow {
+    font-family: 'Cinzel', serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.35em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-bottom: 2.5rem;
+    opacity: 0;
+    animation: fadeUp 1s ease 0.5s forwards;
+  }
+
+  .title-main {
+    font-family: 'EB Garamond', serif;
+    font-size: clamp(2.8rem, 7vw, 5.5rem);
+    font-weight: 400;
+    font-style: italic;
+    color: var(--text);
+    letter-spacing: -0.01em;
+    line-height: 1.1;
+    text-align: center;
+    opacity: 0;
+    animation: fadeUp 1.2s ease 0.9s forwards;
+  }
+
+  .title-divider {
+    width: 1px;
+    height: 60px;
+    background: linear-gradient(to bottom, transparent, var(--accent), transparent);
+    margin: 2.5rem auto;
+    opacity: 0;
+    animation: fadeUp 1s ease 1.4s forwards;
+  }
+
+  .title-sub {
+    font-family: 'EB Garamond', serif;
+    font-size: 0.95rem;
+    color: var(--text-dim);
+    font-style: italic;
+    opacity: 0;
+    animation: fadeUp 1s ease 1.7s forwards;
+  }
+
+  .start-btn {
+    margin-top: 4rem;
+    font-family: 'Cinzel', serif;
+    font-size: 0.7rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--accent);
+    background: none;
+    border: 1px solid var(--choice-border);
+    padding: 0.9rem 2.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    opacity: 0;
+    animation: fadeUp 1s ease 2.2s forwards;
+  }
+
+  .start-btn:hover {
+    background: var(--choice-hover);
+    border-color: var(--accent);
+    color: var(--text);
+  }
+
+  /* GAME SCREEN */
+  #game-screen {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    opacity: 0;
+    transition: opacity 1s ease;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: none;
+  }
+
+  #game-screen::-webkit-scrollbar { display: none; }
+  #game-screen.visible { opacity: 1; }
+
+  /* BACKGROUND */
+  #bg-layer {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    transition: background 2s ease;
+  }
+
+  /* CONTENT */
+  #content {
+    position: relative;
+    z-index: 10;
+    width: 100%;
+    max-width: 680px;
+    padding: 5rem 2rem 6rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  /* SCENE LABEL */
+  #scene-label {
+    font-family: 'Cinzel', serif;
+    font-size: 0.6rem;
+    letter-spacing: 0.4em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 2.5rem;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+  }
+
+  #scene-label.visible { opacity: 1; }
+
+  /* TEXT AREA */
+  #text-area {
+    font-size: clamp(1rem, 2.5vw, 1.15rem);
+    line-height: 1.9;
+    color: var(--text);
+    min-height: 120px;
+  }
+
+  #text-area .paragraph {
+    margin-bottom: 1.4rem;
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+
+  #text-area .paragraph.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .highlight {
+    color: var(--accent);
+    font-style: italic;
+  }
+
+  /* CHOICES */
+  #choices {
+    margin-top: 2.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+  }
+
+  #choices.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .choice-btn {
+    background: var(--choice-bg);
+    border: 1px solid var(--choice-border);
+    color: var(--text);
+    font-family: 'EB Garamond', serif;
+    font-size: 1rem;
+    font-style: italic;
+    padding: 1rem 1.5rem;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    line-height: 1.6;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .choice-btn::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 2px;
+    background: var(--accent);
+    transform: scaleY(0);
+    transition: transform 0.25s ease;
+  }
+
+  .choice-btn:hover {
+    background: var(--choice-hover);
+    border-color: var(--accent);
+    padding-left: 2rem;
+  }
+
+  .choice-btn:hover::before { transform: scaleY(1); }
+
+  .choice-label {
+    font-family: 'Cinzel', serif;
+    font-size: 0.6rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--accent);
+    display: block;
+    margin-bottom: 0.3rem;
+    font-style: normal;
+  }
+
+  /* CONTINUE */
+  #continue-btn {
+    margin-top: 2rem;
+    font-family: 'Cinzel', serif;
+    font-size: 0.6rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.5rem 0;
+    transition: color 0.2s ease;
+    opacity: 0;
+    transition: opacity 0.5s ease, color 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  #continue-btn::after {
+    content: '↓';
+    font-size: 0.8rem;
+  }
+
+  #continue-btn.visible { opacity: 1; }
+  #continue-btn:hover { color: var(--accent); }
+
+  /* SCORE INDICATOR (hidden, tracks choices) */
+  #score-tracker { display: none; }
+
+  /* CURSOR BLINK */
+  .cursor {
+    display: inline-block;
+    width: 2px;
+    height: 1em;
+    background: var(--accent);
+    vertical-align: middle;
+    margin-left: 2px;
+    animation: blink 1s step-end infinite;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ENDING SCREEN */
+  #ending-screen {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg);
+    z-index: 300;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 2s ease;
+    padding: 2rem;
+    text-align: center;
+  }
+
+  #ending-screen.visible {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  .ending-label {
+    font-family: 'Cinzel', serif;
+    font-size: 0.6rem;
+    letter-spacing: 0.4em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-bottom: 1.5rem;
+  }
+
+  .ending-title {
+    font-family: 'EB Garamond', serif;
+    font-size: clamp(1.8rem, 5vw, 3rem);
+    font-style: italic;
+    color: var(--text);
+    margin-bottom: 2rem;
+  }
+
+  .ending-text {
+    max-width: 560px;
+    font-size: 1.05rem;
+    line-height: 1.85;
+    color: var(--text-dim);
+    font-style: italic;
+  }
+
+  .restart-btn {
+    margin-top: 3rem;
+    font-family: 'Cinzel', serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    background: none;
+    border: 1px solid rgba(255,255,255,0.1);
+    padding: 0.8rem 2rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .restart-btn:hover {
+    color: var(--accent);
+    border-color: var(--choice-border);
+  }
+
+  /* MOBILE */
+  @media (max-width: 600px) {
+    #content { padding: 2rem 1.25rem; }
+  }
+</style>
 </head>
 <body>
-    <h1>TFT Augments Wordle</h1>
-    <div id="augment-display" class="augment-card">
-        <img id="augment-image" class="augment-image" src="" alt="Augment">
-        <h3 id="augment-name"></h3>
-        <p>Introduce the avg placement:</p>
-        <input type="number" id="avg-placement-input" step="0.01" placeholder="e.g. 4.53">
-        <button onclick="checkPlacement()">Check</button>
-        <p id="feedback" class="result"></p>
-    </div>
 
-    <script src="script.js"></script>
+<!-- TITLE SCREEN -->
+<div id="title-screen">
+  <div class="title-eyebrow">A story from Palestine</div>
+  <div class="title-main">Cuando pare el ruido</div>
+  <div class="title-divider"></div>
+  <div class="title-sub">An interactive novel</div>
+  <button class="start-btn" onclick="startGame()">Begin</button>
+</div>
+
+<!-- GAME SCREEN -->
+<div id="game-screen">
+  <div id="bg-layer"></div>
+  <div id="content">
+    <div id="scene-label"></div>
+    <div id="text-area"></div>
+    <div id="choices"></div>
+    <button id="continue-btn" onclick="nextBeat()">Continue</button>
+  </div>
+</div>
+
+<!-- ENDING SCREEN -->
+<div id="ending-screen">
+  <div class="ending-label">Fin</div>
+  <div class="ending-title" id="ending-title"></div>
+  <div class="ending-text" id="ending-text"></div>
+  <button class="restart-btn" onclick="restartGame()">Play again</button>
+</div>
+
+<div id="score-tracker"></div>
+
+<script>
+// ============================================================
+// SCORE SYSTEM
+// Only 5 decisions count — those reflecting real vulnerability or self-care:
+// Scene 3: tells Javi she's scared (+1)
+// Scene 6: tells Javi about the crossing (+1)
+// Scene 8: leaves notes, rests (+1)
+// Scene 9: honest answer to coordinator (+1)
+// Scene 10: "I think it went well" (+1)
+// 4-5 → accepted / 2-3 → waitlist / 0-1 → rejected
+// ============================================================
+let score = 0;
+let currentBeat = 0;
+let isTyping = false;
+let skipTyping = false;
+let typingTimeout = null;
+
+// Scenes that count for scoring — keyed by beat index of the choice beat
+// We track which beats have scoring choices
+const scoringBeats = new Set();
+
+// Backgrounds per scene (color gradients, no images needed)
+const sceneBgs = {
+  0: 'radial-gradient(ellipse at 60% 40%, #1a1610 0%, #0d0c0a 70%)',
+  1: 'radial-gradient(ellipse at 30% 60%, #0f1510 0%, #0a0d0b 70%)',
+  2: 'radial-gradient(ellipse at 70% 30%, #12100a 0%, #0d0c0a 70%)',
+  3: 'radial-gradient(ellipse at 40% 50%, #0e1018 0%, #0a0b0d 70%)',
+  4: 'radial-gradient(ellipse at 60% 60%, #100e0a 0%, #0d0c0a 70%)',
+  5: 'radial-gradient(ellipse at 50% 40%, #0f1212 0%, #0b0d0d 70%)',
+};
+
+// ============================================================
+// STORY BEATS
+// Each beat: { scene, label, paragraphs, choices?, bg? }
+// ============================================================
+const story = [
+
+  // ---- SCENE 1 ----
+  {
+    scene: 1,
+    label: 'Day 1 — Home · Tulkarm',
+    bg: 0,
+    paragraphs: [
+      'The phone screen lights up the room before you open your eyes.',
+      "Your mom's side of the bed is already empty. She wakes up before you. She always does.",
+      "You've been waking up like this for days. Check the time. Check the news. Check if anything changed overnight.",
+      'Today something did.',
+    ],
+    auto: true,
+  },
+  {
+    scene: 1,
+    label: 'Day 1 — Home · Tulkarm',
+    bg: 0,
+    paragraphs: [
+      '<span class="highlight">CEASEFIRE ANNOUNCED — Parties agree to halt hostilities</span>',
+      'You read it three times. Then you read the notifications. Javi, 11 messages. Salma. Nadine.',
+      'You put the phone down on the sheets.',
+      "Somewhere in the building, someone is crying. You can't tell if it's relief or grief. Maybe it's both. Maybe there's no difference anymore when you've been counting the dead for months — and these aren't even your dead. Not directly. But you stopped believing that distinction meant anything a long time ago.",
+      "The street outside is starting to make noise. A different kind of noise.",
+      "You're still in bed.",
+    ],
+    choices: [
+      { text: 'Open the shutters.', value: 1 },
+      { text: 'Stay a little longer.', value: 0 },
+    ],
+  },
+  {
+    scene: 1,
+    label: 'Day 1 — Home · Tulkarm',
+    bg: 0,
+    branchA: [
+      "The light comes in hard. Tulkarm is outside, actually outside — a woman talking to her neighbor, kids running, a car honking for no reason except that it can.",
+      "You watch from the window. You don't go down yet.",
+      "There's a part of you that wanted to feel something bigger today. You're still waiting for it.",
+      '"Leen. Come eat." Your mom, from the kitchen.',
+      "You're not hungry. But you go.",
+    ],
+    branchB: [
+      'You put the phone face down.',
+      'The ceasefire isn\'t peace. You know that. Javi will text "finally" and "now you can—" and he means well. He always means well. But he\'s in Santiago de Compostela, waking up in his own apartment, and the distance between that and this is not just kilometers.',
+      'You give yourself five more minutes.',
+      '"Leen. Come eat." Your mom, from the kitchen.',
+      "You're not hungry. But you go.",
+    ],
+    converge: [
+      "The kitchen smells like za'atar and olive oil. Your mom is already dressed, already moving. The news is on.",
+      '"Did you see?" she says, not looking up.',
+      '"Yes."',
+      '"Hamdullah."',
+      "You don't answer that part. She doesn't expect you to.",
+    ],
+  },
+
+  // ---- SCENE 2 ----
+  {
+    scene: 2,
+    label: 'Day 1 — Outside · Tulkarm',
+    bg: 1,
+    paragraphs: [
+      "You haven't been out since before it got bad. You don't count the balcony.",
+      "You put on clothes that aren't pajamas. That already feels like something.",
+      "Your mom doesn't say anything when you grab your keys. She just watches you for a second, the way she does, and then goes back to the dishes.",
+      'You close the door behind you.',
+    ],
+    auto: true,
+  },
+  {
+    scene: 2,
+    label: 'Day 1 — Outside · Tulkarm',
+    bg: 1,
+    paragraphs: [
+      'The street is quieter than you expected.',
+      "Some people are out, but not many. A few men standing near the corner, not really talking. A woman hanging laundry from a window above you. Someone has opened their shop but is just sitting in the doorway, not doing much.",
+      "Everyone looks like they slept badly. Everyone looks like they're waiting for something — another announcement, another sound, something to confirm that today is actually different.",
+      "You know that feeling. You're doing the same thing.",
+      "You walk without direction. Your legs feel strange after weeks of the house. The sun is strong and you forgot how strong it gets.",
+      "There's a cat sitting on a wall watching the street. You stand next to it for a moment. It doesn't move.",
+      "This is the most company you've had outside in weeks.",
+      "On the way back you pass the bakery. It's open. You go in, buy something small, eat it outside.",
+      "It's not a celebration. It's just bread, and sun, and your legs remembering how to walk.",
+      "That's enough for today.",
+    ],
+    auto: true,
+  },
+
+  // ---- SCENE 3 ----
+  {
+    scene: 3,
+    label: 'Day 1 — The call',
+    bg: 2,
+    paragraphs: [
+      "The sun is lower now. You check the house — your dad left a while ago, your brother too. Your mom is out.",
+      'You sit on your bed and call Javi.',
+      "His face appears on the screen. He's in his chair in Santiago — that same chair he really should replace by now, the one that looks one bad day away from collapse. He looks relieved in a way that's almost hard to look at directly.",
+      '"Leen." Just your name, but the way he says it.',
+      '"Hi."',
+      '"How are you. How is it there. Are you okay."',
+      '"I went outside today," you say.',
+      '"Yeah?"',
+      '"Just for a walk. Nothing special."',
+      "He smiles. You can tell he's been worried and is now trying not to show how worried he was.",
+    ],
+    auto: true,
+  },
+  {
+    scene: 3,
+    label: 'Day 1 — The call',
+    bg: 2,
+    paragraphs: [
+      "You talk for a while. He asks about your mom, about the neighborhood, about what the street looked like. He asks good questions — he always tries. But there's a version of this that he can't fully reach and you both know it and neither of you says it.",
+      "At some point he brings up the master's.",
+      '"Maybe now things move faster," he says. "With the ceasefire. The application, the visa process—"',
+      '"Maybe," you say.',
+      '"You\'re the strongest candidate they\'ll see. You know that."',
+      'You look at the wall for a second.',
+    ],
+    counts: true, choices: [
+      { text: "Tell him you're scared they won't take you.", value: 1 },
+      { text: '"I know," you say. Keep it to yourself.', value: 0 },
+    ],
+  },
+  {
+    scene: 3,
+    label: 'Day 1 — The call',
+    bg: 2,
+    branchA: [
+      '"I just—" you start. "What if they don\'t. What if the application goes nowhere and everything stays exactly like this."',
+      "Javi is quiet for a moment. You can almost see him weighing it — trying to find the answer that's actually true, not just the one that sounds right.",
+      '"Then we figure out the next thing," he says finally. "But I don\'t think that\'s what happens."',
+      '"You don\'t know that."',
+      '"No," he admits. "But I know you."',
+      "You don't answer. But something in you loosens, just slightly.",
+    ],
+    branchB: [
+      '"I know," you say.',
+      "And you do know, objectively. Your grades, your languages, your profile on paper. You know what you look like from the outside.",
+      "It's the other thing — the feeling that something will get in the way, that it always does, that having a Palestinian passport means the path is never as straight as it looks — that you keep to yourself.",
+      "Javi talks a little more about the program. You listen. You're good at listening.",
+    ],
+    converge: [
+      'Before you hang up he says, "I miss you."',
+      '"I miss you too."',
+      '"Soon," he says.',
+      "You smile because he needs you to, and also because a small part of you still believes it.",
+      'The screen goes dark. You hear the front door.',
+      'You put the phone away before your mom reaches the hallway.',
+    ],
+  },
+
+  // ---- SCENE 4 ----
+  {
+    scene: 4,
+    label: 'Days later — Birzeit',
+    bg: 3,
+    paragraphs: [
+      "A few days later. You're back.",
+      "Birzeit feels the same and different at the same time — the campus, the noise, the smell of coffee from the place near the faculty building. Like a muscle memory you didn't know you still had.",
+      'Salma texts you before you even get to class: "where are you"',
+      '"Near the gate," you write back.',
+      '"STAY THERE"',
+      "They find you at the same time, from opposite directions, which shouldn't be possible but with Salma and Nadine somehow always is.",
+      "Salma hugs you first, hard, the kind that means she's not going to talk about how worried she was. Nadine says your name like she's checking you're actually there.",
+      'For a moment nobody says anything.',
+      'Then Salma says: "You look terrible."',
+      '"Thank you," you say.',
+      '"I mean it in a loving way."',
+      '"I know."',
+    ],
+    auto: true,
+  },
+  {
+    scene: 4,
+    label: 'Days later — Birzeit',
+    bg: 3,
+    paragraphs: [
+      "You find a spot outside. The sun is still good at this hour. Someone nearby is playing music from their phone — something you half recognize.",
+      "It takes a few minutes to find the rhythm of being with people again. Your body forgot how to just sit with someone without listening for something outside.",
+      "Nadine tells you what you missed. Campus drama, a professor who lost it during an online class, a rumor about exams being pushed back. Normal things. Deliberately normal things.",
+      'You let it wash over you. It helps.',
+      'At some point Salma looks at you.',
+      '"How are you actually."',
+      "Not a question. The way she says it means she already knows part of the answer and is giving you space to fill in the rest.",
+    ],
+    choices: [
+      { text: "Tell them about the master's interview. Amman.", value: 1 },
+      { text: '"I\'m okay. Getting there." Keep the master\'s for another day.', value: 0 },
+    ],
+  },
+  {
+    scene: 4,
+    label: 'Days later — Birzeit',
+    bg: 3,
+    branchA: [
+      "They already knew about the master's in general — everyone does. But the interview, Amman, the coordinator being there that week — that's new.",
+      "Salma's face does three things in two seconds.",
+      '"You\'d have to go through the bridge."',
+      '"I know," you say.',
+      "Nadine is quieter. She's looking at you in that way she has, like she's reading something behind what you're saying.",
+      '"Are you scared?" she asks.',
+      'You think about it honestly.',
+      '"The bridge is the bridge. You know how it is." A pause. "The interview — yeah, a little."',
+      'Salma puts her hand on the table. "You\'re going to be the most prepared person in that room."',
+      "You don't say: that's not always enough. You don't need to. They know.",
+    ],
+    branchB: [
+      '"I\'m okay. Getting there."',
+      "Salma holds your gaze for a second, deciding whether to push. She decides not to.",
+      '"Okay," she says. And moves on.',
+      "The conversation goes somewhere else. You follow it. The sun moves. At some point you realize you've been laughing at something Nadine said and it took you completely by surprise.",
+      'You needed that more than you knew.',
+    ],
+    converge: [
+      "The afternoon goes on longer than you planned. That's how it always is with them.",
+      "When the light starts to change you all go to Salma's car. She puts something on — something with bass, something you know — and pulls out of the parking lot without any particular destination.",
+      'Nadine turns the volume up.',
+      "For a while nobody talks. You watch Birzeit pass through the window, the hills, the last of the sun catching the stone.",
+      "Somewhere along the way you forget. The weeks inside. The news open on your phone at 2am. The classes on a screen, the faces in small rectangles, the feeling that the world had shrunk to the size of a room. The war that wasn't yours and was.",
+      'Just for a while. Just for this.',
+      "You're not okay yet. But you're here. And they're here. And the music is loud enough that nothing else has to be said.",
+    ],
+  },
+
+  // ---- SCENE 5 ----
+  {
+    scene: 5,
+    label: 'The email',
+    bg: 4,
+    paragraphs: [
+      "It comes on a Tuesday. You're in the library, half reading, half not.",
+      'The subject line: <span class="highlight">"Interview opportunity — EMLDS Erasmus Mundus Programme"</span>',
+      "You read it standing up, next to a shelf, with your coat still on.",
+      "The coordinator will be in Amman this week. They've reviewed your file. Your academic record, your languages, the essay. They don't say they're impressed — the email is formal, careful — but they're asking if you can come in person. That means something.",
+      'This week. Four days from now.',
+      'You sit down.',
+    ],
+    auto: true,
+  },
+  {
+    scene: 5,
+    label: 'The email',
+    bg: 4,
+    paragraphs: [
+      "The logistics arrive in your head before the feeling does. That's how you work.",
+      "The bus to the King Hussein Bridge — seats go fast, you need to check today. The control fee, which you have. One night in Amman, maybe two. You've done the crossing before. You know what it costs, what it asks of you.",
+      'You open a new tab. Check the bus.',
+      'Two seats left.',
+      "You close the laptop. Outside the library window, the campus is doing its normal thing. Someone laughs at something. A group passes with coffee cups.",
+      'You think: this is real. This could actually be real.',
+      "And then, immediately, the other thought — the one that lives underneath everything: what if something gets in the way. The crossing takes longer than expected. The interview goes badly. You've worked for this for years and it still might not be enough.",
+      "You know that thought. You don't feed it. But you don't pretend it isn't there.",
+      'You open the laptop again. One seat left.',
+      'You buy it.',
+      "You're going to Tulkarm tonight anyway — dinner with your family. You'll tell them then.",
+    ],
+    choices: [
+      { text: 'Tell them over dinner.', value: 1 },
+      { text: 'Wait until after dinner. Tell your mom first, alone.', value: 0 },
+    ],
+  },
+  {
+    scene: 5,
+    label: 'The email',
+    bg: 4,
+    branchA: [
+      'You wait until everyone has food in front of them.',
+      '"I have an interview," you say. "For the master\'s. In Amman. Thursday."',
+      "Your brother doesn't look up.",
+      'Your mom sets down her glass. "Amman. So you\'d cross."',
+      '"I\'ve crossed before."',
+      'She nods once. "I\'ll take you to the bridge."',
+      "That's it. That's the whole conversation.",
+      "She puts more food on your plate. You eat it.",
+    ],
+    branchB: [
+      "You help her in the kitchen after dinner. The TV is on in the other room.",
+      '"I got an email today," you say.',
+      'She turns.',
+      "You tell her. The interview, Amman, Thursday. She listens without interrupting, which means she's taking it seriously.",
+      '"I\'ll take you to the bridge," she says when you finish.',
+      '"You don\'t have to—"',
+      '"I\'ll take you."',
+      "She goes back to the dishes. That's as much as she'll say about it tonight — but it's enough.",
+    ],
+    converge: [
+      "That night you lie in your old bed and go through it. The questions they might ask. What you'd say. The languages you'd switch between. You know this material — you've known it for years.",
+      'You go over it anyway. Until your eyes close.',
+    ],
+  },
+
+  // ---- SCENE 6 ----
+  {
+    scene: 6,
+    label: 'The night before — Birzeit',
+    bg: 5,
+    paragraphs: [
+      "Your mom is picking you up from Birzeit in the morning. You texted her the time already.",
+      "The flat is quiet. You packed this afternoon — methodically, the way you do things when you're nervous and need your hands to be doing something. One bag. Two days. Asal watched you from the bed the whole time, completely unbothered, which is the only reasonable response to the situation.",
+      "He's still there now, curled at the foot of the bed while you sit at the desk. You reach back and touch him without looking. He doesn't move.",
+      'That helps.',
+      "You open your notes. The EMLDS programme. Linguistic Data Science — linguistics, AI, machine learning, all of it tangled together. Four universities across Europe. The interview in English, which is fine. English you trust.",
+      "The data science side is different. That's not where you come from. You've spent months on it — Javi walking you through the logic of things on video calls, you filling in the gaps at two in the morning, building something that didn't exist in you a year ago. It still doesn't feel fully yours. But it's there. You can talk about it. You can defend it.",
+      'That has to be enough.',
+    ],
+    auto: true,
+  },
+  {
+    scene: 6,
+    label: 'The night before — Birzeit',
+    bg: 5,
+    paragraphs: [
+      'Javi calls around ten.',
+      '"How are you feeling."',
+      '"Ready, I think."',
+      '"You think?"',
+      '"Ready," you say.',
+      "He laughs quietly. You can hear him shifting in that chair.",
+      '"Walk me through it," he says. "The interview. What are you going to say."',
+      '"Javi—"',
+      '"Humor me."',
+      "So you do. You talk through it — why linguistic data science, why this programme, what you'd bring to it. The overlap between your translation background and the computational side you've been building. The research proposal. He listens the way he always does when it matters.",
+      'When you finish he says: "You\'re ready."',
+      '"That was just practice."',
+      '"That was you. Same thing."',
+    ],
+    counts: true, choices: [
+      { text: "Tell him you're not worried about the interview — it's the crossing.", value: 1 },
+      { text: 'Keep it light. Say goodnight, try to sleep.', value: 0 },
+    ],
+  },
+  {
+    scene: 6,
+    label: 'The night before — Birzeit',
+    bg: 5,
+    branchA: [
+      '"It\'s not the interview," you say.',
+      'A pause. He knows what you mean.',
+      '"The bridge."',
+      '"You were there in February," you say. "You saw it from the outside."',
+      "The last day of normal — that's how you think about it now. February, Amman still warm, the kind of warm that felt unfair given where you were going. The GPS had stopped making sense twenty minutes in and after that it was her — asking a truck driver, then a soldier who gave three contradictory answers, then a woman outside a shop who finally pointed them toward the right sign. Javi drove. She talked. He didn't have the language and they both knew it and neither of them said anything about it. Just the weight of it sitting between them in the car, her handling everything, him unable to help.",
+      'Then the border appeared and suddenly there was no more time.',
+      "He'd seen the entrance, the crowd, the soldiers. The organized chaos of it. And then that last hug — rushed, people moving around them, someone behind her saying something — where they both knew they were going back to completely different things. Her through those doors, him back to Santiago. Her reality, his reality. The hug lasted about four seconds and somehow said everything.",
+      '"I know I didn\'t cross," he says. "But I was there."',
+      "You don't answer that.",
+      '"It\'s not dangerous," you say eventually. "I know how it goes. It\'s just — it takes something out of you. And then I have to walk into an interview two hours later."',
+      '"You\'ll have time between. Eat something, sit somewhere quiet. Come back to yourself."',
+      '"Yes."',
+      '"And you\'ve done it before."',
+      '"I know."',
+      "He doesn't push further. That's the right call.",
+    ],
+    branchB: [
+      '"I should sleep," you say.',
+      '"Yeah. Go."',
+      '"Thanks for the practice round."',
+      '"Anytime. You\'re going to be great."',
+      '"Goodnight, Javi."',
+      '"Goodnight, Leen."',
+      'The call ends. The room is quiet.',
+      "You sit with it for a moment — the nerves, the morning, the crossing, the interview. You don't try to fix any of it. You just let it be there.",
+    ],
+    converge: [
+      'You turn off the desk light.',
+      'Asal shifts at the foot of the bed, resettles, goes still again.',
+      "Your bag is by the door. Your ticket is on your phone. Your mom will be here at seven.",
+      'Tomorrow is tomorrow.',
+      'You close your eyes.',
+    ],
+  },
+
+  // ---- SCENE 7 ----
+  {
+    scene: 7,
+    label: 'The crossing — King Hussein Bridge',
+    bg: 0,
+    paragraphs: [
+      "Your mom is waiting outside when you come down. She doesn't say much. She puts your bag in the back and you get in and that's it.",
+      "The drive is quiet in the way that morning drives always are — the road half empty, the light still low. She has something on the radio, low volume. You watch the landscape pass.",
+      'At some point she asks if you\'ve eaten.',
+      '"Yes," you say. You haven\'t.',
+      "She doesn't push it.",
+      "The King Hussein Bridge appears the way it always does — gradually, then all at once. The queue of cars, the signs, the particular atmosphere of a place where everyone is waiting for something and nobody is comfortable.",
+      "You've been here before. You know this.",
+      'Your mom gets out of the car with you.',
+      '"I\'ll be fine," you say.',
+      '"I know," she says.',
+      "She hugs you — not rushed, not dramatic. Just a hug. Then she lets you go.",
+    ],
+    auto: true,
+  },
+  {
+    scene: 7,
+    label: 'The crossing — King Hussein Bridge',
+    bg: 0,
+    paragraphs: [
+      "You join the queue. Around you: families with too much luggage, a man on the phone talking fast, two older women sitting on their bags, a kid pulling at his mother's sleeve. Everyone here is going somewhere or coming from somewhere. Everyone here has a reason.",
+      'The first checkpoint is Israeli.',
+      "The soldier is young. Younger than you, maybe. He looks at your passport, looks at you, looks at your passport again.",
+      '"Where are you going."',
+      '"Amman."',
+      '"Purpose of travel."',
+      '"Academic interview."',
+      "You tell him which university. He writes something down. Asks you to wait.",
+      "You wait. This is the part — the part that takes something out of you even when nothing is wrong, even when it's routine, even when you know exactly how it ends. The waiting while someone decides whether your reason for existing somewhere is sufficient.",
+      'He comes back. Stamps. Hands it over. You move.',
+      "The Jordanian checkpoint is different in texture but not in weight. Same performance required from you — calm, patient, clear. You answer everything they ask. You have everything they need.",
+      "They let you through. That's both of them done.",
+    ],
+    auto: true,
+  },
+  {
+    scene: 7,
+    label: 'In the taxi — toward Amman',
+    bg: 1,
+    paragraphs: [
+      'On the other side, you find a taxi.',
+      "The driver doesn't say much, which suits you. You put your bag in the back, get in, look out the window.",
+      "At first the landscape is green — hills, trees, something that almost looks familiar. But as the road goes on it starts to change. The green thins out. The hills get drier. By the time you're properly into Jordan the land is pale and wide and desert-coloured, the sun hitting it differently than it hits things at home.",
+      'You watch it pass.',
+      "Something in your shoulders drops that you didn't know was held up.",
+      "You think about the interview. You think about Javi's voice last night: that was you, same thing.",
+      "You think about your mom driving back to Tulkarm right now, alone.",
+    ],
+    choices: [
+      { text: 'Close your eyes. Try to rest before Amman.', value: 0 },
+      { text: 'Stay with the window. Let the road be enough for now.', value: 1 },
+    ],
+  },
+  {
+    scene: 7,
+    label: 'In the taxi — toward Amman',
+    bg: 1,
+    branchA: [
+      "You won't sleep. You know you won't sleep. But you close your eyes anyway and let the motion be the only thing for a while.",
+      'No interview. No checkpoint. Just movement.',
+      'When you open them, Amman is starting to appear on the horizon.',
+    ],
+    branchB: [
+      "The road is long. Desert, dust, occasional buildings catching the light. Nothing that requires anything from you.",
+      "You let yourself just be in it — in the taxi, in the motion, in the in-between.",
+      "It's the only part of today where nothing is being asked of you. You stay in it as long as it lasts.",
+    ],
+    converge: [
+      "Amman comes into view slowly — bigger than you remember, or maybe you always forget how big it is. Different from home. Louder in a different way.",
+      'You check the time. You check the address of the place you\'re staying.',
+      'The interview is tomorrow morning.',
+      "You made it across. That's today's job done.",
+    ],
+  },
+
+  // ---- SCENE 8 ----
+  {
+    scene: 8,
+    label: 'Amman — the night',
+    bg: 2,
+    paragraphs: [
+      "The place you're staying is small and clean and not much else. A room booked last minute, somewhere near the centre.",
+      "You leave your bag on the bed and sit for a moment without doing anything. The city comes through the window — traffic, voices, a call to prayer somewhere in the distance. Amman has its own frequency. It's not home and it's not Europe.",
+      'Javi messages: "You there?"',
+      '"Here," you write back.',
+      '"How was the crossing."',
+      '"Fine. Done."',
+      '"And now?"',
+      '"I don\'t know yet."',
+      "He sends back a voice note. You put in your earphones. His voice, that chair creaking in the background, telling you about training today — something that happened at taekwondo, a new guy who showed up completely overconfident and then spent the rest of the session very quietly reassessing his life choices. Javi tells it slowly, with detail, the way he does when he's trying to make something last. You both know what he's doing. Neither of you says it.",
+      'You listen to it twice.',
+    ],
+    auto: true,
+  },
+  {
+    scene: 8,
+    label: 'Amman — the night',
+    bg: 2,
+    paragraphs: [
+      "You're hungry. The room has that end-of-day pull — it would be easy to just order something, not move. But you remember passing a place on the way from the taxi, something that smelled right, and the air outside might do you good after a day of checkpoints and waiting rooms and recycled taxi air.",
+      'You go out.',
+      "The street is quieter now, the evening settling in. You find the place — small, a few tables outside, the kind of menu that doesn't need to be complicated. You sit, order, eat slowly. Watch people pass.",
+      "Nobody here knows where you're going tomorrow. Nobody here knows anything about you. That's its own kind of rest.",
+      "Back in the room you take out your notes. Not to study — you've studied enough. Just to hold them. To remind yourself that you did the work.",
+      'You put them away after a few minutes.',
+    ],
+    counts: true, choices: [
+      { text: 'Go over the interview one last time.', value: 0 },
+      { text: 'Leave the notes. Find something to watch, sleep early.', value: 1 },
+    ],
+  },
+  {
+    scene: 8,
+    label: 'Amman — the night',
+    bg: 2,
+    branchA: [
+      "You open your laptop. The research proposal. The programme structure. The questions you've been asked in practice and the ones you haven't.",
+      'An hour passes. Maybe more.',
+      "At some point you realize you're not taking anything new in — you're just reading the same things in a different order. You know this material. You built it slowly and it's there.",
+      'You close the laptop.',
+      "Tomorrow you'll walk in and it'll either be enough or it won't. Tonight there's nothing left to do.",
+    ],
+    branchB: [
+      'You put the laptop away without opening it.',
+      "You find a show — a new sitcom someone recommended, you can't remember who. It's not great, nothing like How I Met Your Mother, which actually made you feel things — but it does its job. Episode after episode, Amman outside the window getting quieter, your brain slowly unclenching from the day.",
+      "At some point you realize you're almost calm. Not confident. Not ready in the way you imagined you'd feel. Just — quiet.",
+    ],
+    converge: [
+      "The city outside gets quieter. Later than you meant to stay awake.",
+      'Tomorrow: breakfast, taxi, interview. Three things.',
+      'You turn off the light.',
+    ],
+  },
+
+  // ---- SCENE 9 ----
+  {
+    scene: 9,
+    label: 'The interview — Amman',
+    bg: 3,
+    paragraphs: [
+      "The place is a hotel meeting room, the kind that could be anywhere. A table, two chairs, a laptop open to one side. The coordinator is already there when you arrive — Portuguese, fifties, the kind of person who has done this many times and is still genuinely interested in doing it.",
+      'He stands up to shake your hand.',
+      "You are calm. You decided to be calm this morning over breakfast and you have held onto that decision through the taxi and the lobby and the elevator.",
+      '"Leen," he says. Your name in a European mouth, the vowels slightly off.',
+      '"Yes. Thank you for meeting in person."',
+      '"Thank you for making the trip," he says, and something in the way he says it tells you he knows what the trip means.',
+    ],
+    auto: true,
+  },
+  {
+    scene: 9,
+    label: 'The interview — Amman',
+    bg: 3,
+    paragraphs: [
+      "The first part is straightforward. Your background, your degree, your languages. Arabic, English — you answer in English, clean and precise. He asks about your translation work, your methodology, what drew you to the computational side.",
+      "You tell him. The words come the way they came for Javi last night — not perfectly, but honestly. You can hear yourself and you sound like someone who knows what they're talking about.",
+      "Then he asks about your research proposal. This is where it gets harder.",
+      "He's read it carefully. He asks you to defend a methodological choice you made, one you spent three weeks on, one that Javi helped you think through at two in the morning. You know the answer. But under his eyes, in this room, in this city you crossed two checkpoints to reach, the answer takes a moment to arrive.",
+      'A beat too long. You feel it.',
+      'You breathe. You find the thread.',
+      '"The reason I chose that approach," you say, "is—"',
+      "And then you're in it. Defending it clearly, building the argument piece by piece, watching him nod not to be polite but because you're actually saying something.",
+      'The moment passes. You held it.',
+      'Near the end he leans back slightly.',
+      '"Can I ask you something outside the formal questions?"',
+      '"Of course."',
+      '"Why now? Given everything — the situation, the timing. Why apply this year?"',
+    ],
+    counts: true, choices: [
+      { text: 'Say it plainly. The honest answer.', value: 1 },
+      { text: 'Give him the composed version. Professional, careful.', value: 0 },
+    ],
+  },
+  {
+    scene: 9,
+    label: 'The interview — Amman',
+    bg: 3,
+    branchA: [
+      '"Because there\'s never a good time," you say. "Not for someone with my passport. And I decided that waiting for the right moment was just another way of not going."',
+      'He holds your gaze for a second.',
+      '"That\'s a good answer," he says.',
+      "You don't say: I know. But you think it.",
+    ],
+    branchB: [
+      '"The programme\'s timeline aligned with my degree completion," you say. "And the ceasefire created a window for the logistics. It felt like the right moment to move."',
+      'He nods. Writes something.',
+      "It's a fine answer. True enough. You keep the rest for yourself — the part about being tired of waiting, the part about the passport, the part that's none of his business.",
+      "Some things you don't owe anyone.",
+    ],
+    converge: [
+      'He closes his notebook.',
+      '"We\'ll be in touch within two weeks," he says. "The committee reviews all candidates together."',
+      '"I understand."',
+      'He stands, shakes your hand again. "Safe travels back," he says.',
+      "You walk out of the room and down the corridor and into the elevator and you stand there alone for the thirty seconds it takes to reach the lobby.",
+      'In the lobby you stop.',
+      "You did it. Whatever happens next — you showed up, you crossed, you sat in that room and you held it together when it got hard.",
+      "Nobody can take that back.",
+    ],
+  },
+
+  // ---- SCENE 10 ----
+  {
+    scene: 10,
+    label: 'The way back',
+    bg: 1,
+    paragraphs: [
+      "The taxi to the border is early. You didn't sleep much but you didn't need to — you were already awake when the alarm went off, lying in the dark with Amman outside the window doing its early morning thing.",
+      "You checked out, found coffee somewhere near the hotel, stood on the street with it for a few minutes. The city at this hour is different. Quieter, more itself.",
+      "Then the taxi, then the road, then the border appearing again the way it always does.",
+      "The Jordanian checkpoint first this time. Then the Israeli one. Same performance. Same patience. Same holding yourself together in that particular way that leaves no surface for anything to catch on.",
+      "You do it. You've always done it.",
+      "On the other side, your mom's car is there. She got out to wait for you, leaning against the door with her phone. When she sees you she doesn't wave or call your name. She just straightens up.",
+      'You walk toward her.',
+    ],
+    auto: true,
+  },
+  {
+    scene: 10,
+    label: 'The way back',
+    bg: 1,
+    paragraphs: [
+      "The drive back is quiet. The landscape reverses — desert giving way slowly to something greener, drier hills becoming familiar ones.",
+      "Your mom doesn't ask how it went. She'll ask later, at home, over food. She knows how to give you the drive.",
+      "You're grateful for that.",
+      'At some point your phone buzzes. Javi.',
+      '"How are you."',
+      'You look out the window for a moment before answering.',
+    ],
+    counts: true, choices: [
+      { text: '"I think it went well. I don\'t know yet. But I think so."', value: 1 },
+      { text: '"I held it together. That\'s enough for today."', value: 0 },
+    ],
+  },
+  {
+    scene: 10,
+    label: 'The way back',
+    bg: 1,
+    branchA: [
+      "You type it and send it before you can second-guess the words.",
+      'His reply comes fast: "That\'s everything."',
+      "You put the phone face down on your lap. Outside, Tulkarm is getting closer — the shapes of it, the particular way the light hits it at this hour.",
+      "You don't know what the committee will decide. You won't know for two weeks. But something in you has shifted, quietly, without announcement — the knowledge that you crossed, you showed up, you held the hard moment and came out the other side.",
+      'You let yourself have that. Just for the drive.',
+    ],
+    branchB: [
+      'You type it and send it.',
+      'He doesn\'t try to reframe it or push for more. Just: "You did."',
+      'You put the phone away. Outside, Tulkarm is getting closer.',
+      "Enough. That's a real thing. You did what you came to do and you're going home and in two weeks you'll know and right now none of that has to be solved.",
+      "The car moves. Your mom has something low on the radio.",
+      'You close your eyes for the last few minutes of the drive.',
+    ],
+    converge: [
+      'Home. Your street. The door.',
+      "Inside, it smells like it always smells. Your mom goes to the kitchen. Somewhere in the house your brother is doing something, you can hear it.",
+      'You put your bag down.',
+      "You take out your phone and look at it for a moment — no new emails. Two weeks, he said. You knew that.",
+      "This was your first interview for a programme like this. You know that now in a way you didn't before — how they run, what they're looking for, what it feels like to be in that room. And you know something else: your profile got you here. To Amman, to that table, to a coordinator who read your file and decided you were worth the meeting.",
+      "In the worst case, you know how this works now. And you know that getting somewhere like this is becoming less unlikely and more real.",
+      "That's not nothing. That's actually a lot.",
+      'You go to the kitchen. Your mom is already moving, already making something.',
+      '"Sit," she says.',
+      'You sit.',
+    ],
+    isLast: true,
+  },
+];
+
+// ============================================================
+// ENDINGS
+// ============================================================
+const endings = {
+  accepted: {
+    title: 'La aceptan.',
+    text: `The email comes on a Thursday morning. Dear Leen. We are pleased to inform you—
+
+You close the laptop. You sit very still for a moment. Around you the library does its normal thing. Nobody knows. Nobody in this room has any idea.
+
+You call Javi before you've fully processed it.
+
+"They took me," you say.
+
+The sound he makes — you'll remember that.
+
+That evening you're at Salma's. You tell them. It's loud and warm and exactly what you needed. At some point Nadine asks: "How does it feel."
+
+"Like something that was theoretical just became real. Like the door was always there but now it's actually open."
+
+Later, walking back, you stop for a moment on the street. The night is still. But the air is the same air, the stars are the same stars, and somewhere in a few months you'll be somewhere entirely different looking up at the same sky.
+
+You let yourself feel it. All of it at once.
+
+It's a lot to hold. You hold it anyway.`,
+  },
+  waitlist: {
+    title: 'Lista de espera.',
+    text: `The email comes on a Thursday morning. Waitlist. They were impressed by your profile — that's in there, in the careful formal language — but the cohort is small and the competition was exceptional this year.
+
+You read it twice. Put your phone face down. Sit with it.
+
+It's not a no. It's also not a yes.
+
+You find Nadine outside, two coffees on the wall beside her. You sit. You tell her.
+
+"What does waitlist mean practically," she says.
+
+"It means if someone drops out, they call me. It means my profile is real. It means this year might not be the year."
+
+"And next year?"
+
+"I apply again. I know how it works now. I know I can get into that room." A pause. "That's more than I had six months ago."
+
+Nadine is quiet for a moment.
+
+"You crossed the bridge alone. You sat in that interview. That doesn't go away just because of one email."
+
+You don't answer. But you feel it land somewhere real.`,
+  },
+  rejected: {
+    title: 'No la aceptan.',
+    text: `The email comes on a Thursday morning. We regret to inform you.
+
+You read it once. You don't read it again.
+
+In the evening Salma comes over. You didn't ask her to — she just showed up.
+
+She sits on your floor and you sit on your floor and for a while that's enough. Then she says: "Tell me."
+
+So you do. Not just the email — all of it. The crossing, the checkpoint, the interview room, the moment you almost lost the thread and found it again.
+
+"You did all of that."
+
+"And it wasn't enough."
+
+"This time." She holds your gaze. "One committee's decision doesn't unhappen it."
+
+"This was the first programme to open applications this cycle," you say. "The others open in the next few weeks. Same profile, same research proposal — but now I know how the interview goes. I know I can get into that room."
+
+Salma nods. Just: "Okay. Then that's what we do."
+
+We. You notice that.
+
+Later, you sit at your desk. Asal settles next to the laptop. You open a new tab. Deadlines, programmes, application portals. The next ones are already open.
+
+The door didn't open this time. But you found it. You know where it is now.
+
+That's tonight's job done.`,
+  },
+};
+
+// ============================================================
+// ENGINE
+// ============================================================
+let beatIndex = 0;
+let lastChoice = null; // 'A' or 'B'
+
+function startGame() {
+  const ts = document.getElementById('title-screen');
+  ts.classList.add('fade-out');
+  setTimeout(() => {
+    ts.style.display = 'none';
+    const gs = document.getElementById('game-screen');
+    gs.classList.add('visible');
+    renderBeat(0);
+  }, 1500);
+}
+
+function renderBeat(index) {
+  beatIndex = index;
+  const beat = story[index];
+  if (!beat) { showEnding(); return; }
+
+  // Scroll game screen to top for each new beat
+  const gs = document.getElementById('game-screen');
+  gs.scrollTo({ top: 0 });
+
+  // Background
+  const bg = document.getElementById('bg-layer');
+  bg.style.background = sceneBgs[beat.bg] || sceneBgs[0];
+
+  // Label
+  const label = document.getElementById('scene-label');
+  label.textContent = beat.label || '';
+  setTimeout(() => label.classList.add('visible'), 100);
+
+  // Determine paragraphs to show
+  let paras = [];
+
+  if (beat.paragraphs) {
+    paras = beat.paragraphs;
+  } else if (beat.branchA || beat.branchB) {
+    const branch = lastChoice === 'A' ? beat.branchA : beat.branchB;
+    paras = [...(branch || []), ...(beat.converge || [])];
+  }
+
+  // Clear
+  const textArea = document.getElementById('text-area');
+  const choicesEl = document.getElementById('choices');
+  const continueBtn = document.getElementById('continue-btn');
+  textArea.innerHTML = '';
+  choicesEl.innerHTML = '';
+  choicesEl.classList.remove('visible');
+  continueBtn.classList.remove('visible');
+
+  // Render paragraphs with typewriter
+  renderParagraphs(paras, beat, () => {
+    if (beat.choices) {
+      showChoices(beat.choices, beat.counts);
+    } else if (beat.isLast) {
+      showContinue(true);
+    } else {
+      showContinue(false);
+    }
+  });
+}
+
+function renderParagraphs(paras, beat, onDone) {
+  const textArea = document.getElementById('text-area');
+  let i = 0;
+
+  function renderNext() {
+    if (i >= paras.length) { onDone(); return; }
+
+    const div = document.createElement('div');
+    div.className = 'paragraph';
+    textArea.appendChild(div);
+
+    setTimeout(() => {
+      div.classList.add('visible');
+      typeText(div, paras[i], () => {
+        i++;
+        setTimeout(renderNext, 180);
+      });
+    }, 80);
+  }
+
+  renderNext();
+}
+
+function typeText(el, html, onDone) {
+  // Handle HTML (spans etc) — type plain text, inject HTML tags instantly
+  const hasHTML = /<[^>]+>/.test(html);
+  if (hasHTML) {
+    el.innerHTML = html;
+    if (onDone) onDone();
+    return;
+  }
+
+  const text = html;
+  let i = 0;
+  const cursor = document.createElement('span');
+  cursor.className = 'cursor';
+  el.appendChild(cursor);
+
+  isTyping = true;
+  skipTyping = false;
+
+  // Click to skip
+  const skipHandler = () => { skipTyping = true; };
+  document.addEventListener('click', skipHandler, { once: true });
+
+  function type() {
+    if (skipTyping) {
+      el.innerHTML = text;
+      isTyping = false;
+      if (onDone) onDone();
+      return;
+    }
+
+    if (i < text.length) {
+      cursor.remove();
+      el.innerHTML = text.slice(0, i + 1);
+      el.appendChild(cursor);
+      i++;
+
+      // Scroll into view
+      el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+      const char = text[i - 1];
+      const delay = (char === '.' || char === ',' || char === '—') ? 60 : 22;
+      typingTimeout = setTimeout(type, delay);
+    } else {
+      cursor.remove();
+      isTyping = false;
+      document.removeEventListener('click', skipHandler);
+      if (onDone) onDone();
+    }
+  }
+
+  type();
+}
+
+function showChoices(choices, counts) {
+  const choicesEl = document.getElementById('choices');
+  choicesEl.innerHTML = '';
+
+  choices.forEach((c, idx) => {
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn';
+    const label = idx === 0 ? 'A' : 'B';
+    btn.innerHTML = `<span class="choice-label">Option ${label}</span>${c.text}`;
+    btn.onclick = () => makeChoice(label, c.value, counts);
+    choicesEl.appendChild(btn);
+  });
+
+  // Scroll choices into view after a moment
+  setTimeout(() => {
+    choicesEl.classList.add('visible');
+    choicesEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, 200);
+}
+
+function makeChoice(label, value, counts) {
+  lastChoice = label;
+  if (counts) score += value;
+  nextBeat();
+}
+
+function showContinue(isFinal) {
+  const btn = document.getElementById('continue-btn');
+  if (isFinal) {
+    btn.innerHTML = 'Epilogue <span style="font-size:0.8rem">↓</span>';
+  } else {
+    btn.innerHTML = 'Continue <span style="font-size:0.8rem">↓</span>';
+  }
+  setTimeout(() => {
+    btn.classList.add('visible');
+    btn.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, 300);
+}
+
+function nextBeat() {
+  const label = document.getElementById('scene-label');
+  label.classList.remove('visible');
+  setTimeout(() => renderBeat(beatIndex + 1), 300);
+}
+
+function showEnding() {
+  // 4-5 pts → accepted / 2-3 → waitlist / 0-1 → rejected
+  let endingKey;
+  if (score >= 4) endingKey = 'accepted';
+  else if (score >= 2) endingKey = 'waitlist';
+  else endingKey = 'rejected';
+
+  const ending = endings[endingKey];
+  document.getElementById('ending-title').textContent = ending.title;
+  document.getElementById('ending-text').textContent = ending.text;
+
+  const es = document.getElementById('ending-screen');
+  setTimeout(() => es.classList.add('visible'), 800);
+}
+
+function restartGame() {
+  score = 0;
+  beatIndex = 0;
+  lastChoice = null;
+
+  const es = document.getElementById('ending-screen');
+  es.classList.remove('visible');
+
+  const ts = document.getElementById('title-screen');
+  ts.style.display = 'flex';
+  ts.style.opacity = '1';
+  ts.classList.remove('fade-out');
+
+  const gs = document.getElementById('game-screen');
+  gs.scrollTo({ top: 0 });
+  gs.classList.remove('visible');
+}
+</script>
 </body>
 </html>
